@@ -1,0 +1,73 @@
+---
+title: "Drill Through the Earth"
+author: "Kevin Wagg"
+date: "February 4, 2018"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Haven't you always...
+
+Haven't you always wondered what life would be like if you were on the opposite side of the earth?
+
+## Can't go there
+
+We can't take you there, but we can show you exactly where it is.  You just have to:
+
+- Navigate to: https://kevinw7.shinyapps.io/OppositeSide/
+- Enter an address
+- Click 'Submit'
+
+## How does it do that?
+Our app uses the Google Geocode api to retrieve the longitude and latitude of the entered address.  Our app shows the address on a map using leaflet.  It then calculates the location on the opposite side of the Earth and maps that.
+
+## Some code
+
+```{r initalize, echo = FALSE, message = FALSE, warning = FALSE}
+
+library(shiny)
+library(RCurl)
+library(RJSONIO)
+library(plyr)
+
+    url <- function(address, return.call = "json", sensor = "false") {
+        root <- "http://maps.google.com/maps/api/geocode/"
+        
+        u <- paste(root, return.call, "?address=10 Downing Street, London England", address, "&sensor=", sensor, sep = "")
+        return(URLencode(u))
+    }
+```
+
+Below are the results of calling the Google geocode api with the home address of the Prime Minister of England, 10 Downing Street, London England:
+
+```{r continue, echo = FALSE, message = FALSE, warning = FALSE}    
+    geoCode <- function(address,verbose=FALSE) {
+        if(verbose) cat(address,"\n")
+        u <- url(address)
+        doc <- getURL(u)
+        x <- fromJSON(doc,simplify = FALSE)
+        if(x$status=="OK") {
+            lat <- x$results[[1]]$geometry$location$lat
+            lng <- x$results[[1]]$geometry$location$lng
+            location_type <- x$results[[1]]$geometry$location_type
+            formatted_address <- x$results[[1]]$formatted_address
+            return(c(lat, lng, location_type, formatted_address, u))
+        } else {
+            return(c(NA,NA,NA, NA))
+        }
+    }
+    
+    myResult <- function() {
+        return(geoCode("10 Downing Street, London England"))
+    }
+    
+    myResult()[[5]]
+    lat = paste("Latitude: ", as.numeric(myResult()[[1]]))
+    lng = paste("Longitude: ", as.numeric(myResult()[[2]]))
+    lat
+    lng
+```
+
